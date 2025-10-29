@@ -1,0 +1,2998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusOS - Advanced Web Operating System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0078d7;
+            --primary-dark: #106ebe;
+            --accent: #107c10;
+            --danger: #d13438;
+            --warning: #ffb900;
+            --success: #107c10;
+            
+            --dark-bg: #1e1e1e;
+            --dark-surface: #2d2d30;
+            --dark-surface-light: #3e3e42;
+            --dark-text: #ffffff;
+            --dark-text-secondary: #cccccc;
+            
+            --light-bg: #f3f3f3;
+            --light-surface: #ffffff;
+            --light-surface-light: #fafafa;
+            --light-text: #000000;
+            --light-text-secondary: #666666;
+            
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-large: 0 8px 24px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            height: 100vh;
+            background: var(--dark-bg);
+            color: var(--dark-text);
+            transition: var(--transition);
+        }
+
+        body.light-theme {
+            background: var(--light-bg);
+            color: var(--light-text);
+        }
+
+        /* Boot Screen */
+        #bootScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0078d7 0%, #1e1e1e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+        }
+
+        .boot-logo {
+            font-size: 4rem;
+            margin-bottom: 3rem;
+            animation: pulse 2s infinite;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .boot-progress {
+            width: 400px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .boot-progress-bar {
+            height: 100%;
+            background: #ffffff;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 3px;
+        }
+
+        .boot-status {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Lock Screen */
+        #lockscreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1d29 0%, #0f111a 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .lockscreen-content {
+            text-align: center;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .lockscreen-time {
+            font-size: 5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .lockscreen-date {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            color: var(--dark-text-secondary);
+        }
+
+        .password-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        #passwordInput {
+            padding: 15px 20px;
+            font-size: 1rem;
+            width: 300px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+            margin-bottom: 20px;
+        }
+
+        #passwordInput:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .unlock-btn {
+            padding: 15px 40px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 50px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(0, 120, 215, 0.4);
+        }
+
+        .unlock-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Virtual Keyboard */
+        .virtual-keyboard {
+            background: rgba(37, 42, 58, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow-large);
+            margin-top: 20px;
+            animation: slideInUp 0.5s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .keyboard-key {
+            width: 60px;
+            height: 60px;
+            margin: 0 5px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            user-select: none;
+            font-size: 1.1rem;
+        }
+
+        .keyboard-key:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .keyboard-key:active {
+            transform: translateY(0);
+            background: var(--primary);
+        }
+
+        .keyboard-key.wide {
+            width: 120px;
+        }
+
+        .keyboard-key.space {
+            width: 400px;
+        }
+
+        .toggle-keyboard {
+            margin-top: 15px;
+            background: transparent;
+            border: none;
+            color: var(--dark-text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        /* Desktop */
+        #desktop {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            display: none;
+            overflow: hidden;
+        }
+
+        /* Start Menu */
+        #startMenu {
+            position: fixed;
+            bottom: 60px;
+            left: 0;
+            width: 500px;
+            height: 600px;
+            background: rgba(42, 42, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 10px;
+            box-shadow: var(--shadow-large);
+            z-index: 800;
+            display: none;
+            animation: slideInUp 0.3s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .start-header {
+            padding: 30px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 10px 10px 0 0;
+            color: white;
+        }
+
+        .start-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .start-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: calc(100% - 120px);
+        }
+
+        .pinned-apps {
+            padding: 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .recommended {
+            padding: 20px;
+        }
+
+        .app-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .start-app {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            gap: 12px;
+        }
+
+        .start-app:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .start-app i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Taskbar */
+        #taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(42, 42, 42, 0.9);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            box-sizing: border-box;
+            z-index: 900;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .start-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 10px;
+        }
+
+        .start-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .taskbar-apps {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .taskbar-app {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-right: 5px;
+            position: relative;
+        }
+
+        .taskbar-app.active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .taskbar-app:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .taskbar-app i {
+            font-size: 1.2rem;
+        }
+
+        .system-tray {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-right: 20px;
+        }
+
+        .system-icon {
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .system-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #clock {
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        #clock:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Desktop Icons */
+        .desktop-icons {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 100px);
+            grid-gap: 25px;
+        }
+
+        .icon {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: 12px;
+            padding: 10px;
+            animation: iconAppear 0.5s ease-out;
+            position: relative;
+        }
+
+        .icon:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-5px);
+        }
+
+        .icon.selected {
+            background: rgba(0, 120, 215, 0.2);
+        }
+
+        .icon-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            background: var(--primary);
+            box-shadow: 0 5px 15px rgba(0, 120, 215, 0.4);
+        }
+
+        .icon-img i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .icon p {
+            font-size: 0.8rem;
+            text-align: center;
+            color: var(--dark-text);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* App Windows */
+        .app-window {
+            position: absolute;
+            min-width: 400px;
+            min-height: 300px;
+            background: var(--dark-surface);
+            border-radius: 12px;
+            box-shadow: var(--shadow-large);
+            overflow: hidden;
+            z-index: 100;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            animation: windowOpen 0.3s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .app-window.closing {
+            animation: windowClose 0.3s ease-out forwards;
+        }
+
+        .app-header {
+            background: var(--dark-surface-light);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: move;
+            user-select: none;
+        }
+
+        .app-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .window-control.close {
+            background: var(--danger);
+        }
+
+        .window-control.minimize {
+            background: var(--warning);
+        }
+
+        .window-control.maximize {
+            background: var(--success);
+        }
+
+        .window-control:hover {
+            transform: scale(1.2);
+        }
+
+        .app-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Terminal */
+        .terminal-body {
+            background: #0c0c0c;
+            color: #cccccc;
+            height: 100%;
+            padding: 15px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            border-radius: 0 0 12px 12px;
+            overflow-y: auto;
+        }
+
+        .terminal-output {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+
+        .terminal-prompt {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .terminal-user {
+            color: #16c60c;
+        }
+
+        .terminal-path {
+            color: #3b78ff;
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #cccccc;
+            font-family: inherit;
+            font-size: 1rem;
+            width: 100%;
+            margin-left: 5px;
+            outline: none;
+        }
+
+        /* File Manager */
+        .file-manager-body {
+            display: flex;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: var(--dark-surface-light);
+            padding: 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-item:hover, .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .file-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-gap: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .file-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            background: var(--primary);
+        }
+
+        .file-icon i {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+        .file-size {
+            font-size: 0.75rem;
+            color: var(--dark-text-secondary);
+        }
+
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .file-upload-area i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .uploaded-files {
+            margin-top: 20px;
+        }
+
+        .uploaded-file {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .uploaded-file:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .file-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        .file-action {
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .file-action:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Music Player */
+        .music-player-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .album-art {
+            width: 200px;
+            height: 200px;
+            border-radius: 15px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .album-art i {
+            font-size: 4rem;
+            color: white;
+        }
+
+        .song-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .song-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .song-artist {
+            color: var(--dark-text-secondary);
+            font-size: 1rem;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--primary);
+            width: 30%;
+            border-radius: 5px;
+            transition: width 0.1s linear;
+        }
+
+        .progress-time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--dark-text-secondary);
+        }
+
+        .player-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            gap: 15px;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.1);
+        }
+
+        .control-btn.play-pause {
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+        }
+
+        .control-btn.play-pause:hover {
+            background: var(--primary-dark);
+        }
+
+        .control-btn i {
+            font-size: 1.2rem;
+            color: var(--dark-text);
+        }
+
+        .control-btn.play-pause i {
+            color: white;
+        }
+
+        /* Video Player */
+        .video-player-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-player {
+            flex: 1;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-player video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .video-controls {
+            padding: 15px;
+            background: var(--dark-surface-light);
+            border-radius: 8px;
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Calculator */
+        .calculator {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .calc-display {
+            width: 100%;
+            padding: 20px;
+            font-size: 2rem;
+            text-align: right;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px;
+            color: inherit;
+            margin-bottom: 20px;
+        }
+
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            flex: 1;
+        }
+
+        .calc-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: inherit;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .calc-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .calc-btn.operator {
+            background: var(--primary);
+            color: white;
+        }
+
+        .calc-btn.operator:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Notepad */
+        .notepad-editor {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-family: 'Consolas', monospace;
+            font-size: 1rem;
+            resize: none;
+            outline: none;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notepad-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* Paint */
+        .paint-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .paint-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .paint-tool {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .paint-tool:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .paint-tool.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .paint-canvas-container {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .paint-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* Browser */
+        .browser-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .browser-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .browser-url {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: inherit;
+        }
+
+        .browser-content {
+            flex: 1;
+            border: none;
+            border-radius: 8px;
+            background: white;
+        }
+
+        /* Settings */
+        .settings-body {
+            display: flex;
+            height: 100%;
+        }
+
+        .settings-sidebar {
+            width: 200px;
+            background: var(--dark-surface-light);
+            padding: 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .settings-section {
+            margin-bottom: 30px;
+        }
+
+        .settings-section h3 {
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .wallpaper-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .wallpaper-item {
+            height: 100px;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .wallpaper-item:hover {
+            transform: scale(1.05);
+        }
+
+        .wallpaper-item.active::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .wallpaper-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: var(--transition);
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-surface);
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-large);
+            z-index: 1002;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+            border-left: 4px solid var(--primary);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background: var(--dark-surface);
+            border-radius: 8px;
+            box-shadow: var(--shadow-large);
+            z-index: 1001;
+            display: none;
+            overflow: hidden;
+            min-width: 200px;
+            animation: fadeIn 0.2s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .context-menu ul {
+            list-style: none;
+            padding: 8px 0;
+        }
+
+        .context-menu li {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .context-menu li:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes windowOpen {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes windowClose {
+            from {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+        }
+
+        @keyframes iconAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.5) rotate(-10deg);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes keyPress {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .desktop-icons {
+                grid-template-columns: repeat(auto-fill, 80px);
+                grid-gap: 15px;
+            }
+            
+            .icon {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .start-menu {
+                width: 100%;
+                height: 70%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Boot Screen -->
+    <div id="bootScreen">
+        <div class="boot-logo">
+            <i class="fas fa-cube"></i> NexusOS
+        </div>
+        <div class="boot-progress">
+            <div class="boot-progress-bar" id="bootProgress"></div>
+        </div>
+        <div class="boot-status" id="bootStatus">Initializing system...</div>
+    </div>
+
+    <!-- Lock Screen -->
+    <div id="lockscreen">
+        <div class="lockscreen-content">
+            <div class="lockscreen-time" id="lockscreenTime">10:30</div>
+            <div class="lockscreen-date" id="lockscreenDate">Monday, June 12</div>
+            <div class="password-container">
+                <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="off">
+                <button class="unlock-btn" onclick="unlock()">Unlock</button>
+            </div>
+            
+            <!-- Virtual Keyboard -->
+            <div class="virtual-keyboard" id="virtualKeyboard" style="display: none;">
+                <div class="keyboard-row">
+                    <div class="keyboard-key" data-key="1">1</div>
+                    <div class="keyboard-key" data-key="2">2</div>
+                    <div class="keyboard-key" data-key="3">3</div>
+                    <div class="keyboard-key" data-key="4">4</div>
+                    <div class="keyboard-key" data-key="5">5</div>
+                    <div class="keyboard-key" data-key="6">6</div>
+                    <div class="keyboard-key" data-key="7">7</div>
+                    <div class="keyboard-key" data-key="8">8</div>
+                    <div class="keyboard-key" data-key="9">9</div>
+                    <div class="keyboard-key" data-key="0">0</div>
+                </div>
+                <div class="keyboard-row">
+                    <div class="keyboard-key wide" data-key="Backspace">⌫</div>
+                    <div class="keyboard-key space" data-key=" ">Space</div>
+                    <div class="keyboard-key wide" data-key="Enter">Enter</div>
+                </div>
+                <button class="toggle-keyboard" onclick="toggleKeyboard()">
+                    <i class="fas fa-keyboard"></i> Hide Keyboard
+                </button>
+            </div>
+            <button class="toggle-keyboard" onclick="toggleKeyboard()" id="showKeyboardBtn">
+                <i class="fas fa-keyboard"></i> Show Keyboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Desktop -->
+    <div id="desktop">
+        <!-- Desktop Icons -->
+        <div class="desktop-icons">
+            <div class="icon" data-app="terminal" onclick="openApp('terminal')">
+                <div class="icon-img">
+                    <i class="fas fa-terminal"></i>
+                </div>
+                <p>Terminal</p>
+            </div>
+            <div class="icon" data-app="fileManager" onclick="openApp('fileManager')">
+                <div class="icon-img">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <p>File Explorer</p>
+            </div>
+            <div class="icon" data-app="browser" onclick="openApp('browser')">
+                <div class="icon-img">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <p>Browser</p>
+            </div>
+            <div class="icon" data-app="videoPlayer" onclick="openApp('videoPlayer')">
+                <div class="icon-img">
+                    <i class="fas fa-video"></i>
+                </div>
+                <p>Video Player</p>
+            </div>
+            <div class="icon" data-app="musicPlayer" onclick="openApp('musicPlayer')">
+                <div class="icon-img">
+                    <i class="fas fa-music"></i>
+                </div>
+                <p>Music Player</p>
+            </div>
+            <div class="icon" data-app="calculator" onclick="openApp('calculator')">
+                <div class="icon-img">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <p>Calculator</p>
+            </div>
+            <div class="icon" data-app="settings" onclick="openApp('settings')">
+                <div class="icon-img">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <p>Settings</p>
+            </div>
+            <div class="icon" data-app="notepad" onclick="openApp('notepad')">
+                <div class="icon-img">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <p>Notepad</p>
+            </div>
+            <div class="icon" data-app="paint" onclick="openApp('paint')">
+                <div class="icon-img">
+                    <i class="fas fa-paint-brush"></i>
+                </div>
+                <p>Paint</p>
+            </div>
+        </div>
+
+        <!-- Start Menu -->
+        <div id="startMenu">
+            <div class="start-header">
+                <div class="start-user">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <h3>Nexus User</h3>
+                        <p>Administrator</p>
+                    </div>
+                </div>
+            </div>
+            <div class="start-content">
+                <div class="pinned-apps">
+                    <h4>Pinned</h4>
+                    <div class="app-list">
+                        <div class="start-app" onclick="openApp('terminal')">
+                            <i class="fas fa-terminal"></i>
+                            <span>Terminal</span>
+                        </div>
+                        <div class="start-app" onclick="openApp('fileManager')">
+                            <i class="fas fa-folder"></i>
+                            <span>File Explorer</span>
+                        </div>
+                        <div class="start-app" onclick="openApp('browser')">
+                            <i class="fas fa-globe"></i>
+                            <span>Browser</span>
+                        </div>
+                        <div class="start-app" onclick="openApp('settings')">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="recommended">
+                    <h4>Recommended</h4>
+                    <div class="app-list">
+                        <div class="start-app" onclick="openApp('videoPlayer')">
+                            <i class="fas fa-video"></i>
+                            <span>Video Player</span>
+                        </div>
+                        <div class="start-app" onclick="openApp('musicPlayer')">
+                            <i class="fas fa-music"></i>
+                            <span>Music Player</span>
+                        </div>
+                        <div class="start-app" onclick="openApp('calculator')">
+                            <i class="fas fa-calculator"></i>
+                            <span>Calculator</span>
+                        </div>
+                        <div class="start-app" onclick="openApp('notepad')">
+                            <i class="fas fa-edit"></i>
+                            <span>Notepad</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taskbar -->
+        <div id="taskbar">
+            <div class="start-button" onclick="toggleStartMenu()">
+                <i class="fab fa-windows"></i>
+            </div>
+            <div class="taskbar-apps" id="taskbarApps">
+                <!-- Taskbar apps will be added dynamically -->
+            </div>
+            <div class="system-tray">
+                <div class="system-icon" onclick="toggleWiFi()">
+                    <i class="fas fa-wifi" id="wifiIcon"></i>
+                </div>
+                <div class="system-icon" onclick="toggleSound()">
+                    <i class="fas fa-volume-up" id="soundIcon"></i>
+                </div>
+                <div class="system-icon" onclick="toggleTheme()">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </div>
+                <div id="clock">10:30 AM</div>
+            </div>
+        </div>
+
+        <!-- Apps Container -->
+        <div id="apps"></div>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast"></div>
+
+        <!-- Context Menu -->
+        <div class="context-menu" id="contextMenu">
+            <ul>
+                <li onclick="openApp('terminal')"><i class="fas fa-terminal"></i> Open Terminal</li>
+                <li onclick="openApp('fileManager')"><i class="fas fa-folder"></i> Open File Explorer</li>
+                <li><i class="fas fa-desktop"></i> Refresh Desktop</li>
+                <li><i class="fas fa-palette"></i> Personalize</li>
+                <li><i class="fas fa-power-off"></i> Shut Down</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Global State Management
+        let osState = {
+            // System Settings
+            isDarkTheme: true,
+            isSoundEnabled: true,
+            isWiFiEnabled: true,
+            currentWallpaper: 1,
+            
+            // User Data
+            userFiles: [],
+            userMusic: [],
+            userVideos: [],
+            userDocuments: [],
+            openedApps: [],
+            
+            // App Data
+            notepadFiles: {},
+            paintFiles: {},
+            
+            // System State
+            volume: 80,
+            brightness: 100,
+            battery: 85
+        };
+
+        // DOM Elements
+        let appsContainer, contextMenu, activeWindow, isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        let currentTrackIndex = 0, isPlaying = false;
+        let startMenu, taskbarApps;
+        let currentMusic = null;
+        let currentVideo = null;
+
+        // Sample Data
+        const wallpapers = [
+            'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=1920&h=1080&fit=crop',
+            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=1080&fit=crop',
+            'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&h=1080&fit=crop',
+            'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=1920&h=1080&fit=crop'
+        ];
+
+        // Terminal Commands
+        const terminalCommands = {
+            'help': `Available commands:
+help - Show this help
+clear - Clear terminal
+date - Show current date
+time - Show current time
+theme [dark|light] - Change theme
+sound [on|off] - Toggle sound
+wifi [on|off] - Toggle WiFi
+calc [expression] - Calculator
+weather - Show weather
+system - System info
+ls - List files
+echo [text] - Echo text
+neofetch - System information`,
+
+            'neofetch': `
+╭──────────────────────────────────────────╮
+│              NexusOS v2.0                │
+│                                          │
+│  OS: NexusOS Web Edition                 │
+│  Host: Web Browser                       │
+│  Kernel: JavaScript 5.0                  │
+│  Uptime: ${Math.floor(performance.now()/1000)} seconds        │
+│                                          │
+│  ██████████████████████████████████████  │
+╰──────────────────────────────────────────╯`,
+
+            'system': `
+System Information:
+- OS: NexusOS Web Edition
+- Version: 2.0.0
+- Architecture: Web-based
+- Memory: ${navigator.deviceMemory || 'Unknown'} GB
+- Cores: ${navigator.hardwareConcurrency}
+- Browser: ${navigator.userAgent.split(' ')[0]}`,
+
+            'clear': function() { 
+                document.querySelector('.terminal-output').innerHTML = '';
+                return '';
+            },
+            'date': () => new Date().toLocaleDateString(),
+            'time': () => new Date().toLocaleTimeString(),
+            'theme': (args) => {
+                if (args[0] === 'dark' || args[0] === 'light') {
+                    toggleTheme(args[0] === 'dark');
+                    return `Theme changed to ${args[0]}`;
+                }
+                return 'Usage: theme [dark|light]';
+            },
+            'sound': (args) => {
+                if (args[0] === 'on' || args[0] === 'off') {
+                    toggleSound(args[0] === 'on');
+                    return `Sound ${args[0] === 'on' ? 'enabled' : 'disabled'}`;
+                }
+                return 'Usage: sound [on|off]';
+            },
+            'wifi': (args) => {
+                if (args[0] === 'on' || args[0] === 'off') {
+                    toggleWiFi(args[0] === 'on');
+                    return `WiFi ${args[0] === 'on' ? 'enabled' : 'disabled'}`;
+                }
+                return 'Usage: wifi [on|off]';
+            },
+            'calc': (args) => {
+                try {
+                    return eval(args.join(' '));
+                } catch (e) {
+                    return 'Invalid expression';
+                }
+            },
+            'weather': () => 'Current weather: Sunny, 22°C, Light breeze',
+            'ls': () => osState.userFiles.map(f => f.name).join('\n') || 'No files',
+            'echo': (args) => args.join(' ')
+        };
+
+        // Initialize OS
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeOS();
+        });
+
+        function initializeOS() {
+            // Cache DOM elements
+            appsContainer = document.getElementById('apps');
+            contextMenu = document.getElementById('contextMenu');
+            startMenu = document.getElementById('startMenu');
+            taskbarApps = document.getElementById('taskbarApps');
+            
+            // Load saved state
+            loadOSState();
+            
+            // Start boot sequence
+            startBootSequence();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Initialize clock
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        function setupEventListeners() {
+            // Desktop context menu
+            document.getElementById('desktop').addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY);
+            });
+            
+            // Close context menu on click
+            document.addEventListener('click', function() {
+                contextMenu.style.display = 'none';
+            });
+            
+            // Virtual keyboard
+            initVirtualKeyboard();
+            
+            // Password input enter key
+            document.getElementById('passwordInput').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') unlock();
+            });
+            
+            // Auto-save
+            setInterval(saveOSState, 30000);
+            window.addEventListener('beforeunload', saveOSState);
+        }
+
+        // Boot Sequence
+        function startBootSequence() {
+            const stages = [
+                { progress: 10, status: "Initializing kernel..." },
+                { progress: 25, status: "Loading drivers..." },
+                { progress: 40, status: "Starting services..." },
+                { progress: 60, status: "Loading user profile..." },
+                { progress: 80, status: "Preparing desktop..." },
+                { progress: 100, status: "Welcome to NexusOS!" }
+            ];
+
+            let currentStage = 0;
+            
+            function nextStage() {
+                if (currentStage < stages.length) {
+                    const stage = stages[currentStage];
+                    document.getElementById('bootProgress').style.width = stage.progress + '%';
+                    document.getElementById('bootStatus').textContent = stage.status;
+                    
+                    currentStage++;
+                    setTimeout(nextStage, 600 + Math.random() * 400);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('bootScreen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('bootScreen').style.display = 'none';
+                            document.getElementById('lockscreen').style.display = 'flex';
+                        }, 500);
+                    }, 1000);
+                }
+            }
+            
+            nextStage();
+        }
+
+        // State Management
+        function loadOSState() {
+            const saved = localStorage.getItem('nexusOS_state');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.assign(osState, state);
+                
+                // Apply settings
+                document.body.classList.toggle('light-theme', !osState.isDarkTheme);
+                document.getElementById('themeIcon').className = osState.isDarkTheme ? 'fas fa-moon' : 'fas fa-sun';
+                document.getElementById('soundIcon').className = osState.isSoundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+                document.getElementById('wifiIcon').className = osState.isWiFiEnabled ? 'fas fa-wifi' : 'fas fa-wifi-slash';
+                
+                if (osState.currentWallpaper && wallpapers[osState.currentWallpaper-1]) {
+                    document.getElementById('desktop').style.backgroundImage = `url(${wallpapers[osState.currentWallpaper-1]})`;
+                }
+            }
+        }
+
+        function saveOSState() {
+            localStorage.setItem('nexusOS_state', JSON.stringify(osState));
+        }
+
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, duration);
+        }
+
+        // System Functions
+        function unlock() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === '1234') {
+                document.getElementById('lockscreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('lockscreen').style.display = 'none';
+                    document.getElementById('desktop').style.display = 'block';
+                    showToast('Welcome to NexusOS!');
+                }, 500);
+            } else {
+                alert('Incorrect password! Try "1234"');
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const date = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+            
+            document.getElementById('clock').textContent = time;
+            document.getElementById('lockscreenTime').textContent = time;
+            document.getElementById('lockscreenDate').textContent = date;
+        }
+
+        function toggleStartMenu() {
+            startMenu.style.display = startMenu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleTheme(force) {
+            osState.isDarkTheme = force !== undefined ? force : !osState.isDarkTheme;
+            document.body.classList.toggle('light-theme', !osState.isDarkTheme);
+            document.getElementById('themeIcon').className = osState.isDarkTheme ? 'fas fa-moon' : 'fas fa-sun';
+            showToast(osState.isDarkTheme ? 'Dark theme enabled' : 'Light theme enabled');
+            saveOSState();
+        }
+
+        function toggleSound(force) {
+            osState.isSoundEnabled = force !== undefined ? force : !osState.isSoundEnabled;
+            document.getElementById('soundIcon').className = osState.isSoundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+            showToast(osState.isSoundEnabled ? 'Sound enabled' : 'Sound disabled');
+            saveOSState();
+        }
+
+        function toggleWiFi(force) {
+            osState.isWiFiEnabled = force !== undefined ? force : !osState.isWiFiEnabled;
+            document.getElementById('wifiIcon').className = osState.isWiFiEnabled ? 'fas fa-wifi' : 'fas fa-wifi-slash';
+            showToast(osState.isWiFiEnabled ? 'WiFi enabled' : 'WiFi disabled');
+            saveOSState();
+        }
+
+        // Virtual Keyboard
+        function toggleKeyboard() {
+            const keyboard = document.getElementById('virtualKeyboard');
+            const showBtn = document.getElementById('showKeyboardBtn');
+            
+            if (keyboard.style.display === 'none') {
+                keyboard.style.display = 'block';
+                showBtn.innerHTML = '<i class="fas fa-keyboard"></i> Hide Keyboard';
+            } else {
+                keyboard.style.display = 'none';
+                showBtn.innerHTML = '<i class="fas fa-keyboard"></i> Show Keyboard';
+            }
+        }
+
+        function initVirtualKeyboard() {
+            const keys = document.querySelectorAll('.keyboard-key');
+            const passwordInput = document.getElementById('passwordInput');
+            
+            keys.forEach(key => {
+                key.addEventListener('click', function() {
+                    this.style.animation = 'keyPress 0.1s';
+                    setTimeout(() => this.style.animation = '', 100);
+                    
+                    const keyValue = this.getAttribute('data-key');
+                    
+                    if (keyValue === 'Backspace') {
+                        passwordInput.value = passwordInput.value.slice(0, -1);
+                    } else if (keyValue === 'Enter') {
+                        unlock();
+                    } else if (keyValue === ' ') {
+                        passwordInput.value += ' ';
+                    } else {
+                        passwordInput.value += keyValue;
+                        passwordInput.style.transform = 'scale(1.02)';
+                        setTimeout(() => passwordInput.style.transform = 'scale(1)', 100);
+                    }
+                    
+                    passwordInput.focus();
+                });
+            });
+        }
+
+        // Application Management
+        function openApp(appName) {
+            if (activeWindow) {
+                closeApp(activeWindow.querySelector('.window-control.close'));
+            }
+
+            let appContent;
+            const appId = Date.now();
+
+            switch(appName) {
+                case 'terminal':
+                    appContent = createTerminal(appId);
+                    break;
+                case 'fileManager':
+                    appContent = createFileManager(appId);
+                    break;
+                case 'browser':
+                    appContent = createBrowser(appId);
+                    break;
+                case 'videoPlayer':
+                    appContent = createVideoPlayer(appId);
+                    break;
+                case 'musicPlayer':
+                    appContent = createMusicPlayer(appId);
+                    break;
+                case 'calculator':
+                    appContent = createCalculator(appId);
+                    break;
+                case 'settings':
+                    appContent = createSettings(appId);
+                    break;
+                case 'notepad':
+                    appContent = createNotepad(appId);
+                    break;
+                case 'paint':
+                    appContent = createPaint(appId);
+                    break;
+                default:
+                    appContent = `<div class="app-window"><div class="app-body">App not found</div></div>`;
+            }
+
+            appsContainer.innerHTML = appContent;
+            activeWindow = document.querySelector('.app-window');
+            makeWindowDraggable(activeWindow);
+            
+            // Add to taskbar
+            addToTaskbar(appName, appId);
+            
+            // Initialize app-specific functionality
+            setTimeout(() => initAppFunctionality(appName), 100);
+        }
+
+        function initAppFunctionality(appName) {
+            switch(appName) {
+                case 'terminal':
+                    initTerminal();
+                    break;
+                case 'musicPlayer':
+                    initMusicPlayer();
+                    break;
+                case 'videoPlayer':
+                    initVideoPlayer();
+                    break;
+                case 'calculator':
+                    initCalculator();
+                    break;
+                case 'notepad':
+                    initNotepad();
+                    break;
+                case 'paint':
+                    initPaint();
+                    break;
+                case 'browser':
+                    initBrowser();
+                    break;
+            }
+        }
+
+        // App Creators
+        function createTerminal(id) {
+            return `
+                <div class="app-window" style="top: 10%; left: 10%; width: 700px; height: 500px;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-terminal"></i> Terminal
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body terminal-body">
+                        <div class="terminal-output">NexusOS Terminal v2.0\nType 'help' for available commands\n\n</div>
+                        <div class="terminal-prompt">
+                            <span class="terminal-user">user@nexusos</span>:<span class="terminal-path">~</span>$
+                            <input type="text" class="terminal-input" autofocus>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createFileManager(id) {
+            return `
+                <div class="app-window" style="top: 5%; left: 5%; width: 90%; height: 85%;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-folder"></i> File Explorer
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body file-manager-body">
+                        <div class="sidebar">
+                            <div class="sidebar-item active" onclick="showFileSection('all')"><i class="fas fa-home"></i> Home</div>
+                            <div class="sidebar-item" onclick="showFileSection('music')"><i class="fas fa-music"></i> Music</div>
+                            <div class="sidebar-item" onclick="showFileSection('videos')"><i class="fas fa-video"></i> Videos</div>
+                            <div class="sidebar-item" onclick="showFileSection('documents')"><i class="fas fa-file"></i> Documents</div>
+                        </div>
+                        <div class="file-content">
+                            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                                <button class="unlock-btn" onclick="uploadFile()" style="padding: 8px 15px;">
+                                    <i class="fas fa-upload"></i> Upload Files
+                                </button>
+                                <input type="file" id="fileUploadInput" multiple style="display: none;" onchange="handleFileUpload(this.files)">
+                            </div>
+                            <div id="fileManagerContent">
+                                ${renderFileSection('all')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createMusicPlayer(id) {
+            return `
+                <div class="app-window" style="top: 10%; left: 10%; width: 400px; height: 500px;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-music"></i> Music Player
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body">
+                        <div class="music-player-container">
+                            <div class="album-art">
+                                <i class="fas fa-music"></i>
+                            </div>
+                            <div class="song-info">
+                                <div class="song-title" id="currentSongTitle">No song selected</div>
+                                <div class="song-artist" id="currentSongArtist">Select a song to play</div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress" id="musicProgress"></div>
+                                </div>
+                                <div class="progress-time">
+                                    <span id="currentTime">0:00</span>
+                                    <span id="totalTime">0:00</span>
+                                </div>
+                            </div>
+                            <div class="player-controls">
+                                <div class="control-btn" onclick="previousTrack()">
+                                    <i class="fas fa-step-backward"></i>
+                                </div>
+                                <div class="control-btn play-pause" onclick="toggleMusicPlayback()">
+                                    <i class="fas fa-play" id="playPauseIcon"></i>
+                                </div>
+                                <div class="control-btn" onclick="nextTrack()">
+                                    <i class="fas fa-step-forward"></i>
+                                </div>
+                            </div>
+                            <div style="margin-top: 20px;">
+                                <h4>Your Music</h4>
+                                <div class="uploaded-files" id="musicFilesList">
+                                    ${renderMusicFiles()}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createVideoPlayer(id) {
+            return `
+                <div class="app-window" style="top: 0%; left: 30%; width: 800px; height: 600px;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-video"></i> Video Player
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body">
+                        <div class="video-player-container">
+                            <div class="video-player">
+                                <video id="videoElement" controls style="width: 100%; height: 100%;">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                            <div class="video-controls">
+                                <input type="file" id="videoUpload" accept="video/*" style="display: none;" onchange="loadVideo(this.files[0])">
+                                <button class="unlock-btn" onclick="document.getElementById('videoUpload').click()">
+                                    <i class="fas fa-folder-open"></i> Open Video
+                                </button>
+                                <div style="margin-top: 10px;">
+                                    <h4>Your Videos</h4>
+                                    <div class="uploaded-files" id="videoFilesList">
+                                        ${renderVideoFiles()}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createCalculator(id) {
+            return `
+                <div class="app-window" style="top: 20%; left: 20%; width: 500px; height: 800px;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-calculator"></i> Calculator
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body">
+                        <div class="calculator">
+                            <input type="text" class="calc-display" id="calcDisplay" value="0" readonly>
+                            <div class="calc-buttons">
+                                <button class="calc-btn" onclick="clearCalculator()">C</button>
+                                <button class="calc-btn" onclick="appendToCalc('/')">/</button>
+                                <button class="calc-btn" onclick="appendToCalc('*')">×</button>
+                                <button class="calc-btn" onclick="appendToCalc('-')">-</button>
+                                <button class="calc-btn" onclick="appendToCalc('7')">7</button>
+                                <button class="calc-btn" onclick="appendToCalc('8')">8</button>
+                                <button class="calc-btn" onclick="appendToCalc('9')">9</button>
+                                <button class="calc-btn operator" onclick="appendToCalc('+')">+</button>
+                                <button class="calc-btn" onclick="appendToCalc('4')">4</button>
+                                <button class="calc-btn" onclick="appendToCalc('5')">5</button>
+                                <button class="calc-btn" onclick="appendToCalc('6')">6</button>
+                                <button class="calc-btn" onclick="appendToCalc('1')">1</button>
+                                <button class="calc-btn" onclick="appendToCalc('2')">2</button>
+                                <button class="calc-btn" onclick="appendToCalc('3')">3</button>
+                                <button class="calc-btn operator" onclick="calculateResult()" style="grid-row: span 2;">=</button>
+                                <button class="calc-btn" onclick="appendToCalc('0')" style="grid-column: span 2;">0</button>
+                                <button class="calc-btn" onclick="appendToCalc('.')">.</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createNotepad(id) {
+            return `
+                <div class="app-window" style="top: 10%; left: 10%; width: 600px; height: 500px;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-edit"></i> Notepad
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body">
+                        <div class="notepad-toolbar">
+                            <button class="unlock-btn" onclick="newNotepadFile()" style="padding: 8px 15px;">New</button>
+                            <button class="unlock-btn" onclick="saveNotepadFile()" style="padding: 8px 15px;">Save</button>
+                            <input type="file" id="notepadFileInput" accept=".txt" style="display: none;" onchange="loadNotepadFile(this.files[0])">
+                            <button class="unlock-btn" onclick="document.getElementById('notepadFileInput').click()" style="padding: 8px 15px;">Open</button>
+                        </div>
+                        <textarea class="notepad-editor" id="notepadEditor" placeholder="Start typing..."></textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createPaint(id) {
+            return `
+                <div class="app-window" style="top: 5%; left: 5%; width: 800px; height: 600px;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-paint-brush"></i> Paint
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body">
+                        <div class="paint-container">
+                            <div class="paint-toolbar">
+                                <button class="paint-tool active" onclick="setPaintTool('pencil')">Pencil</button>
+                                <button class="paint-tool" onclick="setPaintTool('brush')">Brush</button>
+                                <button class="paint-tool" onclick="setPaintTool('eraser')">Eraser</button>
+                                <input type="color" id="paintColor" value="#000000" onchange="setPaintColor(this.value)">
+                                <button class="paint-tool" onclick="clearPaintCanvas()">Clear</button>
+                                <button class="paint-tool" onclick="savePaintCanvas()">Save</button>
+                            </div>
+                            <div class="paint-canvas-container">
+                                <canvas class="paint-canvas" id="paintCanvas" width="800" height="500"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createBrowser(id) {
+            return `
+                <div class="app-window" style="top: 5%; left: 5%; width: 90%; height: 85%;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-globe"></i> Browser
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body">
+                        <div class="browser-container">
+                            <div class="browser-nav">
+                                <button class="unlock-btn" onclick="browserGoBack()" style="padding: 8px 15px;">← Back</button>
+                                <button class="unlock-btn" onclick="browserGoForward()" style="padding: 8px 15px;">Forward →</button>
+                                <button class="unlock-btn" onclick="browserReload()" style="padding: 8px 15px;">Reload</button>
+                                <input type="text" class="browser-url" id="browserUrl" value="https://www.example.com" onkeypress="if(event.key=='Enter') browserNavigate()">
+                                <button class="unlock-btn" onclick="browserNavigate()" style="padding: 8px 15px;">Go</button>
+                            </div>
+                            <iframe class="browser-content" id="browserFrame" src="https://www.example.com"></iframe>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createSettings(id) {
+            return `
+                <div class="app-window" style="top: 10%; left: 10%; width: 700px; height: 500px;" data-app-id="${id}">
+                    <div class="app-header">
+                        <div class="app-title">
+                            <i class="fas fa-cog"></i> Settings
+                        </div>
+                        <div class="window-controls">
+                            <div class="window-control minimize"></div>
+                            <div class="window-control maximize"></div>
+                            <div class="window-control close" onclick="closeApp(this)"></div>
+                        </div>
+                    </div>
+                    <div class="app-body settings-body">
+                        <div class="settings-sidebar">
+                            <div class="sidebar-item active" onclick="showSettingsSection('personalization')"><i class="fas fa-palette"></i> Personalization</div>
+                            <div class="sidebar-item" onclick="showSettingsSection('system')"><i class="fas fa-cog"></i> System</div>
+                            <div class="sidebar-item" onclick="showSettingsSection('storage')"><i class="fas fa-hdd"></i> Storage</div>
+                        </div>
+                        <div class="settings-content">
+                            <div class="settings-section" id="personalizationSection">
+                                <h3>Personalization</h3>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Dark Mode</h4>
+                                        <p>Toggle between dark and light themes</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" ${osState.isDarkTheme ? 'checked' : ''} onchange="toggleTheme(this.checked)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Wallpaper</h4>
+                                        <p>Change desktop background</p>
+                                    </div>
+                                </div>
+                                <div class="wallpaper-grid">
+                                    ${wallpapers.map((wallpaper, index) => `
+                                        <div class="wallpaper-item ${index + 1 === osState.currentWallpaper ? 'active' : ''}" onclick="changeWallpaper(${index + 1})">
+                                            <img src="${wallpaper}" alt="Wallpaper ${index + 1}">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="settings-section" id="systemSection" style="display: none;">
+                                <h3>System</h3>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Sound</h4>
+                                        <p>Enable or disable system sounds</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" ${osState.isSoundEnabled ? 'checked' : ''} onchange="toggleSound(this.checked)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>WiFi</h4>
+                                        <p>Enable or disable WiFi connection</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" ${osState.isWiFiEnabled ? 'checked' : ''} onchange="toggleWiFi(this.checked)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="settings-section" id="storageSection" style="display: none;">
+                                <h3>Storage</h3>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Used Space</h4>
+                                        <p>${calculateUsedSpace()} MB used</p>
+                                    </div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Clear Cache</h4>
+                                        <p>Remove temporary files</p>
+                                    </div>
+                                    <button class="unlock-btn" onclick="clearCache()" style="padding: 8px 15px;">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // File Manager Functions
+        function showFileSection(section) {
+            const content = renderFileSection(section);
+            document.getElementById('fileManagerContent').innerHTML = content;
+            
+            // Update active sidebar item
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function renderFileSection(section) {
+            let files = [];
+            let title = '';
+            
+            switch(section) {
+                case 'all':
+                    files = [...osState.userFiles, ...osState.userMusic, ...osState.userVideos, ...osState.userDocuments];
+                    title = 'All Files';
+                    break;
+                case 'music':
+                    files = osState.userMusic;
+                    title = 'Music Files';
+                    break;
+                case 'videos':
+                    files = osState.userVideos;
+                    title = 'Video Files';
+                    break;
+                case 'documents':
+                    files = osState.userDocuments;
+                    title = 'Documents';
+                    break;
+            }
+            
+            if (files.length === 0) {
+                return `
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-folder-open" style="font-size: 3rem; color: var(--dark-text-secondary); margin-bottom: 1rem;"></i>
+                        <h3 style="color: var(--dark-text-secondary); margin-bottom: 1rem;">${title}</h3>
+                        <p style="color: var(--dark-text-secondary);">This folder is empty</p>
+                        <button class="unlock-btn" onclick="uploadFile()" style="margin-top: 1rem; padding: 10px 20px;">
+                            <i class="fas fa-upload"></i> Upload Files
+                        </button>
+                    </div>
+                `;
+            }
+            
+            return `
+                <h3 style="margin-bottom: 20px;">${title} (${files.length} items)</h3>
+                <div class="files-grid">
+                    ${files.map(file => `
+                        <div class="file-item" ondblclick="openFile('${file.id}')">
+                            <div class="file-icon">
+                                <i class="fas fa-${getFileIcon(file.type)}"></i>
+                            </div>
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${file.size}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderMusicFiles() {
+            if (osState.userMusic.length === 0) {
+                return '<p style="color: var(--dark-text-secondary); text-align: center;">No music files</p>';
+            }
+            
+            return osState.userMusic.map((music, index) => `
+                <div class="uploaded-file" onclick="playMusic(${index})">
+                    <i class="fas fa-music"></i>
+                    <div style="flex: 1;">
+                        <div class="file-name">${music.name}</div>
+                        <div class="file-size">${music.size}</div>
+                    </div>
+                    <div class="file-actions">
+                        <div class="file-action" onclick="event.stopPropagation(); deleteFile('music', ${index})">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderVideoFiles() {
+            if (osState.userVideos.length === 0) {
+                return '<p style="color: var(--dark-text-secondary); text-align: center;">No video files</p>';
+            }
+            
+            return osState.userVideos.map((video, index) => `
+                <div class="uploaded-file" onclick="playVideo(${index})">
+                    <i class="fas fa-video"></i>
+                    <div style="flex: 1;">
+                        <div class="file-name">${video.name}</div>
+                        <div class="file-size">${video.size}</div>
+                    </div>
+                    <div class="file-actions">
+                        <div class="file-action" onclick="event.stopPropagation(); deleteFile('videos', ${index})">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function uploadFile() {
+            document.getElementById('fileUploadInput').click();
+        }
+
+        function handleFileUpload(files) {
+            for (let file of files) {
+                const fileReader = new FileReader();
+                
+                fileReader.onload = function(e) {
+                    const fileData = {
+                        id: 'file_' + Date.now() + Math.random().toString(36).substr(2, 9),
+                        name: file.name,
+                        size: formatFileSize(file.size),
+                        type: file.type,
+                        url: e.target.result,
+                        uploadDate: new Date().toLocaleDateString()
+                    };
+                    
+                    // Categorize file
+                    if (file.type.includes('audio')) {
+                        osState.userMusic.push(fileData);
+                        showToast(`Music file added: ${file.name}`);
+                    } else if (file.type.includes('video')) {
+                        osState.userVideos.push(fileData);
+                        showToast(`Video file added: ${file.name}`);
+                    } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
+                        osState.userDocuments.push(fileData);
+                        showToast(`Document added: ${file.name}`);
+                    } else {
+                        osState.userFiles.push(fileData);
+                        showToast(`File added: ${file.name}`);
+                    }
+                    
+                    saveOSState();
+                    
+                    // Refresh file manager if open
+                    if (document.querySelector('[data-app-id]')) {
+                        const activeSection = document.querySelector('.sidebar-item.active');
+                        if (activeSection) {
+                            showFileSection(activeSection.textContent.trim().toLowerCase());
+                        }
+                    }
+                };
+                
+                fileReader.readAsDataURL(file);
+            }
+        }
+
+        function openFile(fileId) {
+            // Find file in all categories
+            const allFiles = [...osState.userFiles, ...osState.userMusic, ...osState.userVideos, ...osState.userDocuments];
+            const file = allFiles.find(f => f.id === fileId);
+            
+            if (!file) return;
+            
+            if (file.type.includes('audio')) {
+                openApp('musicPlayer');
+                setTimeout(() => {
+                    const index = osState.userMusic.findIndex(f => f.id === fileId);
+                    if (index !== -1) playMusic(index);
+                }, 500);
+            } else if (file.type.includes('video')) {
+                openApp('videoPlayer');
+                setTimeout(() => {
+                    const index = osState.userVideos.findIndex(f => f.id === fileId);
+                    if (index !== -1) playVideo(index);
+                }, 500);
+            } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
+                openApp('notepad');
+                setTimeout(() => {
+                    loadTextFile(file);
+                }, 500);
+            } else {
+                showToast(`Opening: ${file.name}`);
+                // For other file types, you could implement more handlers
+            }
+        }
+
+        function deleteFile(category, index) {
+            if (confirm('Are you sure you want to delete this file?')) {
+                switch(category) {
+                    case 'music':
+                        osState.userMusic.splice(index, 1);
+                        break;
+                    case 'videos':
+                        osState.userVideos.splice(index, 1);
+                        break;
+                    case 'documents':
+                        osState.userDocuments.splice(index, 1);
+                        break;
+                    default:
+                        osState.userFiles.splice(index, 1);
+                }
+                saveOSState();
+                showToast('File deleted');
+                
+                // Refresh current view
+                if (document.querySelector('[data-app-id]')) {
+                    const activeSection = document.querySelector('.sidebar-item.active');
+                    if (activeSection) {
+                        showFileSection(activeSection.textContent.trim().toLowerCase());
+                    }
+                }
+            }
+        }
+
+        // Music Player Functions
+        function initMusicPlayer() {
+            currentMusic = null;
+            isPlaying = false;
+            updateMusicUI();
+        }
+
+        function playMusic(index) {
+            if (osState.userMusic[index]) {
+                currentMusic = osState.userMusic[index];
+                currentTrackIndex = index;
+                updateMusicUI();
+                showToast(`Now playing: ${currentMusic.name}`);
+            }
+        }
+
+        function toggleMusicPlayback() {
+            if (!currentMusic) return;
+            
+            isPlaying = !isPlaying;
+            const icon = document.getElementById('playPauseIcon');
+            icon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+            
+            if (isPlaying) {
+                simulateMusicProgress();
+            }
+        }
+
+        function previousTrack() {
+            if (osState.userMusic.length === 0) return;
+            currentTrackIndex = (currentTrackIndex - 1 + osState.userMusic.length) % osState.userMusic.length;
+            playMusic(currentTrackIndex);
+        }
+
+        function nextTrack() {
+            if (osState.userMusic.length === 0) return;
+            currentTrackIndex = (currentTrackIndex + 1) % osState.userMusic.length;
+            playMusic(currentTrackIndex);
+        }
+
+        function updateMusicUI() {
+            if (currentMusic) {
+                document.getElementById('currentSongTitle').textContent = currentMusic.name;
+                document.getElementById('currentSongArtist').textContent = 'Uploaded Music';
+                document.getElementById('playPauseIcon').className = 'fas fa-play';
+            } else {
+                document.getElementById('currentSongTitle').textContent = 'No song selected';
+                document.getElementById('currentSongArtist').textContent = 'Select a song to play';
+            }
+            
+            // Update music files list
+            document.getElementById('musicFilesList').innerHTML = renderMusicFiles();
+        }
+
+        function simulateMusicProgress() {
+            if (!isPlaying) return;
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (!isPlaying) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                progress += 0.5;
+                if (progress > 100) {
+                    progress = 0;
+                    nextTrack();
+                }
+                
+                document.getElementById('musicProgress').style.width = progress + '%';
+                
+                const totalSeconds = 180; // 3 minutes
+                const currentSeconds = Math.floor((progress / 100) * totalSeconds);
+                const minutes = Math.floor(currentSeconds / 60);
+                const seconds = currentSeconds % 60;
+                
+                document.getElementById('currentTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('totalTime').textContent = '3:00';
+            }, 1000);
+        }
+
+        // Video Player Functions
+        function initVideoPlayer() {
+            currentVideo = null;
+        }
+
+        function loadVideo(file) {
+            if (file) {
+                const video = document.getElementById('videoElement');
+                const url = URL.createObjectURL(file);
+                video.src = url;
+                
+                const fileData = {
+                    id: 'video_' + Date.now(),
+                    name: file.name,
+                    size: formatFileSize(file.size),
+                    type: file.type,
+                    url: url,
+                    uploadDate: new Date().toLocaleDateString()
+                };
+                
+                osState.userVideos.push(fileData);
+                saveOSState();
+                showToast(`Video loaded: ${file.name}`);
+                
+                // Update video files list
+                document.getElementById('videoFilesList').innerHTML = renderVideoFiles();
+            }
+        }
+
+        function playVideo(index) {
+            if (osState.userVideos[index]) {
+                const video = document.getElementById('videoElement');
+                currentVideo = osState.userVideos[index];
+                video.src = currentVideo.url;
+                video.play();
+                showToast(`Playing: ${currentVideo.name}`);
+            }
+        }
+
+        // Calculator Functions
+        function initCalculator() {
+            // Calculator is ready to use
+        }
+
+        function appendToCalc(value) {
+            const display = document.getElementById('calcDisplay');
+            if (display.value === '0' && value !== '.') {
+                display.value = value;
+            } else {
+                display.value += value;
+            }
+        }
+
+        function clearCalculator() {
+            document.getElementById('calcDisplay').value = '0';
+        }
+
+        function calculateResult() {
+            const display = document.getElementById('calcDisplay');
+            try {
+                // Replace × with * for evaluation
+                const expression = display.value.replace(/×/g, '*');
+                display.value = eval(expression) || '0';
+            } catch (e) {
+                display.value = 'Error';
+            }
+        }
+
+        // Notepad Functions
+        function initNotepad() {
+            // Notepad is ready to use
+        }
+
+        function newNotepadFile() {
+            document.getElementById('notepadEditor').value = '';
+            showToast('New document created');
+        }
+
+        function saveNotepadFile() {
+            const content = document.getElementById('notepadEditor').value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'document.txt';
+            a.click();
+            showToast('Document saved');
+        }
+
+        function loadNotepadFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('notepadEditor').value = e.target.result;
+                showToast('Document loaded');
+            };
+            reader.readAsText(file);
+        }
+
+        function loadTextFile(file) {
+            // This would load a text file into notepad
+            // Implementation depends on how you want to handle it
+        }
+
+        // Paint Functions
+        function initPaint() {
+            const canvas = document.getElementById('paintCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            let painting = false;
+            let currentTool = 'pencil';
+            let currentColor = '#000000';
+            let brushSize = 2;
+            
+            function startPosition(e) {
+                painting = true;
+                draw(e);
+            }
+            
+            function finishedPosition() {
+                painting = false;
+                ctx.beginPath();
+            }
+            
+            function draw(e) {
+                if (!painting) return;
+                
+                ctx.lineWidth = brushSize;
+                ctx.lineCap = 'round';
+                
+                if (currentTool === 'pencil' || currentTool === 'brush') {
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = currentTool === 'brush' ? 10 : 2;
+                } else if (currentTool === 'eraser') {
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 20;
+                }
+                
+                ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+            }
+            
+            canvas.addEventListener('mousedown', startPosition);
+            canvas.addEventListener('mouseup', finishedPosition);
+            canvas.addEventListener('mousemove', draw);
+        }
+
+        function setPaintTool(tool) {
+            // Update UI
+            document.querySelectorAll('.paint-tool').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function setPaintColor(color) {
+            // Color is set via the color input
+        }
+
+        function clearPaintCanvas() {
+            const canvas = document.getElementById('paintCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            showToast('Canvas cleared');
+        }
+
+        function savePaintCanvas() {
+            const canvas = document.getElementById('paintCanvas');
+            const image = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = image;
+            a.download = 'painting.png';
+            a.click();
+            showToast('Painting saved');
+        }
+
+        // Browser Functions
+        function initBrowser() {
+            // Browser is ready to use
+        }
+
+        function browserNavigate() {
+            const url = document.getElementById('browserUrl').value;
+            const frame = document.getElementById('browserFrame');
+            if (!url.startsWith('http')) {
+                frame.src = 'https://' + url;
+            } else {
+                frame.src = url;
+            }
+        }
+
+        function browserGoBack() {
+            // Basic implementation - in real browser would use history
+            showToast('Back button clicked');
+        }
+
+        function browserGoForward() {
+            // Basic implementation
+            showToast('Forward button clicked');
+        }
+
+        function browserReload() {
+            const frame = document.getElementById('browserFrame');
+            frame.src = frame.src;
+            showToast('Page reloaded');
+        }
+
+        // Settings Functions
+        function showSettingsSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.settings-section').forEach(sec => {
+                sec.style.display = 'none';
+            });
+            
+            // Remove active class from all sidebar items
+            document.querySelectorAll('.settings-sidebar .sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section and set active class
+            document.getElementById(section + 'Section').style.display = 'block';
+            event.target.classList.add('active');
+        }
+
+        function changeWallpaper(index) {
+            osState.currentWallpaper = index;
+            document.getElementById('desktop').style.backgroundImage = `url(${wallpapers[index-1]})`;
+            
+            // Update active state in wallpaper grid
+            document.querySelectorAll('.wallpaper-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            saveOSState();
+            showToast(`Wallpaper ${index} applied`);
+        }
+
+        function calculateUsedSpace() {
+            // Simple calculation based on number of files
+            const totalFiles = osState.userFiles.length + osState.userMusic.length + osState.userVideos.length + osState.userDocuments.length;
+            return Math.round(totalFiles * 0.5); // Approximate MB
+        }
+
+        function clearCache() {
+            // In a real implementation, this would clear actual cache
+            showToast('Cache cleared');
+        }
+
+        // Utility Functions
+        function closeApp(element) {
+            const window = element.closest('.app-window');
+            window.classList.add('closing');
+            
+            setTimeout(() => {
+                appsContainer.innerHTML = '';
+                activeWindow = null;
+                removeFromTaskbar(window.dataset.appId);
+            }, 300);
+        }
+
+        function addToTaskbar(appName, appId) {
+            const appElement = document.createElement('div');
+            appElement.className = 'taskbar-app';
+            appElement.innerHTML = `<i class="fas fa-${getAppIcon(appName)}"></i>`;
+            appElement.dataset.appId = appId;
+            appElement.onclick = () => focusApp(appId);
+            taskbarApps.appendChild(appElement);
+        }
+
+        function removeFromTaskbar(appId) {
+            const appElement = document.querySelector(`.taskbar-app[data-app-id="${appId}"]`);
+            if (appElement) {
+                appElement.remove();
+            }
+        }
+
+        function focusApp(appId) {
+            // Implementation for focusing an app
+            // This would bring the window to front
+        }
+
+        function getAppIcon(appName) {
+            const icons = {
+                terminal: 'terminal',
+                fileManager: 'folder',
+                browser: 'globe',
+                videoPlayer: 'video',
+                musicPlayer: 'music',
+                calculator: 'calculator',
+                settings: 'cog',
+                notepad: 'edit',
+                paint: 'paint-brush'
+            };
+            return icons[appName] || 'question';
+        }
+
+        function getFileIcon(fileType) {
+            const iconMap = {
+                'audio': 'file-audio',
+                'video': 'file-video',
+                'image': 'file-image',
+                'pdf': 'file-pdf',
+                'text': 'file-alt',
+                'zip': 'file-archive',
+                'default': 'file'
+            };
+            
+            for (let [type, icon] of Object.entries(iconMap)) {
+                if (fileType.includes(type)) {
+                    return icon;
+                }
+            }
+            return iconMap.default;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function makeWindowDraggable(window) {
+            const header = window.querySelector('.app-header');
+            
+            header.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                dragOffset.x = e.clientX - window.offsetLeft;
+                dragOffset.y = e.clientY - window.offsetTop;
+                
+                document.querySelectorAll('.app-window').forEach(w => {
+                    w.style.zIndex = 100;
+                });
+                window.style.zIndex = 101;
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    window.style.left = (e.clientX - dragOffset.x) + 'px';
+                    window.style.top = (e.clientY - dragOffset.y) + 'px';
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+        }
+
+        function showContextMenu(x, y) {
+            contextMenu.style.left = x + 'px';
+            contextMenu.style.top = y + 'px';
+            contextMenu.style.display = 'block';
+        }
+
+        // Terminal functionality
+        function initTerminal() {
+            const terminalInput = document.querySelector('.terminal-input');
+            const terminalOutput = document.querySelector('.terminal-output');
+            
+            if (terminalInput) {
+                terminalInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        const command = this.value.trim();
+                        if (command) {
+                            terminalOutput.innerHTML += `<div>> ${command}</div>`;
+                            
+                            const parts = command.split(' ');
+                            const cmd = parts[0].toLowerCase();
+                            const args = parts.slice(1);
+                            
+                            let output = 'Command not found. Type "help" for available commands.';
+                            
+                            if (terminalCommands[cmd]) {
+                                if (typeof terminalCommands[cmd] === 'function') {
+                                    output = terminalCommands[cmd](args);
+                                } else {
+                                    output = terminalCommands[cmd];
+                                }
+                            }
+                            
+                            terminalOutput.innerHTML += `<div>${output}</div>`;
+                            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                            this.value = '';
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
